@@ -4,7 +4,7 @@ export const mockUsers = [
      {
           _id: 'admin1',
           name: 'Dr. Sarah Admin',
-          email: 'admin@examguard.com',
+          email: 'admin@quizora.com',
           password: 'admin123',
           role: 'admin',
           createdAt: '2024-01-15T10:00:00Z',

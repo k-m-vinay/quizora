@@ -14,6 +14,7 @@ export default function AdminResults() {
      const [loading, setLoading] = useState(true)
      const [selectedTest, setSelectedTest] = useState('all')
      const [search, setSearch] = useState('')
+     const [showCheaters, setShowCheaters] = useState(false)
      const [showDetailModal, setShowDetailModal] = useState(false)
      const [selectedAttempt, setSelectedAttempt] = useState(null)
 
@@ -36,14 +37,20 @@ export default function AdminResults() {
      const filtered = attempts.filter(a => {
           const matchesTest = selectedTest === 'all' || a.testId === selectedTest
           const matchesSearch = a.studentName?.toLowerCase().includes(search.toLowerCase())
-          return matchesTest && matchesSearch
+          const matchesCheater = !showCheaters || a.terminatedByViolation
+          return matchesTest && matchesSearch && matchesCheater
      })
 
+     const cheaterCount = attempts.filter(a => a.terminatedByViolation).length
+
      const exportCSV = () => {
-          const headers = ['Student', 'Test', 'Score', 'Total', 'Percentage', 'Tab Switches', 'Started', 'Submitted']
+          const headers = ['Student', 'Test', 'Status', 'Score', 'Total', 'Percentage', 'Violation', 'Started', 'Submitted']
           const rows = filtered.map(a => [
-               a.studentName, a.testTitle, a.score, a.totalMarks,
-               `${a.percentage}%`, a.tabSwitchCount,
+               a.studentName, a.testTitle,
+               a.terminatedByViolation ? 'MALPRACTICE' : 'Clean',
+               a.score, a.totalMarks,
+               `${a.percentage}%`,
+               a.terminatedByViolation ? (a.violationReason || 'violation') : 'none',
                new Date(a.startedAt).toLocaleString(), new Date(a.submittedAt).toLocaleString(),
           ])
           const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
@@ -72,7 +79,7 @@ export default function AdminResults() {
                </div>
 
                {/* Filters */}
-               <div className="flex flex-col sm:flex-row gap-3">
+               <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
                     <div className="relative flex-1 max-w-md">
                          <HiMagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by student name..."
@@ -86,6 +93,16 @@ export default function AdminResults() {
                               {tests.map(t => <option key={t._id} value={t._id}>{t.title}</option>)}
                          </select>
                     </div>
+                    <button
+                         onClick={() => setShowCheaters(!showCheaters)}
+                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${showCheaters
+                              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700'
+                              : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border border-surface-200 dark:border-surface-700 hover:bg-red-50 dark:hover:bg-red-900/10'
+                              }`}
+                    >
+                         <HiExclamationTriangle className="w-4 h-4" />
+                         {showCheaters ? `Showing Cheaters (${cheaterCount})` : `Cheaters (${cheaterCount})`}
+                    </button>
                </div>
 
                {/* Results Table */}
@@ -96,30 +113,31 @@ export default function AdminResults() {
                                    <tr className="bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-700">
                                         <th className="text-left px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Student</th>
                                         <th className="text-left px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Test</th>
+                                        <th className="text-center px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Status</th>
                                         <th className="text-center px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Score</th>
                                         <th className="text-center px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">%</th>
-                                        <th className="text-center px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Tab Switches</th>
                                         <th className="text-center px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Submitted</th>
                                         <th className="text-center px-5 py-3.5 font-medium text-surface-600 dark:text-surface-400">Actions</th>
                                    </tr>
                               </thead>
                               <tbody className="divide-y divide-surface-100 dark:divide-surface-700/50">
                                    {filtered.map(a => (
-                                        <tr key={a._id} className="hover:bg-surface-50 dark:hover:bg-surface-800/30 transition-colors">
+                                        <tr key={a._id} className={`hover:bg-surface-50 dark:hover:bg-surface-800/30 transition-colors ${a.terminatedByViolation ? 'bg-red-50/50 dark:bg-red-900/5' : ''}`}>
                                              <td className="px-5 py-3.5 font-medium text-surface-900 dark:text-white">{a.studentName}</td>
                                              <td className="px-5 py-3.5 text-surface-600 dark:text-surface-400 max-w-[200px] truncate">{a.testTitle}</td>
+                                             <td className="px-5 py-3.5 text-center">
+                                                  {a.terminatedByViolation ? (
+                                                       <span className="badge-danger flex items-center justify-center gap-1 text-xs font-bold">
+                                                            🚫 MALPRACTICE
+                                                       </span>
+                                                  ) : (
+                                                       <span className="badge-success text-xs">Clean</span>
+                                                  )}
+                                             </td>
                                              <td className="px-5 py-3.5 text-center font-medium">{a.score}/{a.totalMarks}</td>
                                              <td className="px-5 py-3.5 text-center">
-                                                  <span className={`badge ${a.percentage >= 75 ? 'badge-success' : a.percentage >= 50 ? 'badge-warning' : 'badge-danger'}`}>
+                                                  <span className={`badge ${a.terminatedByViolation ? 'badge-danger' : a.percentage >= 75 ? 'badge-success' : a.percentage >= 50 ? 'badge-warning' : 'badge-danger'}`}>
                                                        {a.percentage}%
-                                                  </span>
-                                             </td>
-                                             <td className="px-5 py-3.5 text-center">
-                                                  <span className={`badge ${a.tabSwitchCount === 0 ? 'badge-success' : a.tabSwitchCount <= 2 ? 'badge-warning' : 'badge-danger'}`}>
-                                                       {a.tabSwitchCount}
-                                                       {a.tabSwitchCount > 2 && (
-                                                            <HiExclamationTriangle className="w-3 h-3 ml-1" />
-                                                       )}
                                                   </span>
                                              </td>
                                              <td className="px-5 py-3.5 text-center text-surface-500 dark:text-surface-400 text-xs">
@@ -146,6 +164,17 @@ export default function AdminResults() {
                     title={`Result Details — ${selectedAttempt?.studentName}`} size="lg">
                     {selectedAttempt && (
                          <div className="space-y-4">
+                              {selectedAttempt.terminatedByViolation && (
+                                   <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+                                        <div className="flex items-center gap-2 mb-1">
+                                             <span className="text-red-600 dark:text-red-400 font-bold text-sm">🚫 MALPRACTICE — Exam Terminated</span>
+                                        </div>
+                                        <p className="text-xs text-red-600 dark:text-red-400">
+                                             Reason: <strong>{selectedAttempt.violationReason?.replace(/_/g, ' ') || 'Policy violation'}</strong>
+                                        </p>
+                                   </div>
+                              )}
+
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                    <div className="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50 text-center">
                                         <p className="text-xs text-surface-500">Score</p>
@@ -156,9 +185,9 @@ export default function AdminResults() {
                                         <p className="text-lg font-bold text-surface-900 dark:text-white">{selectedAttempt.percentage}%</p>
                                    </div>
                                    <div className="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50 text-center">
-                                        <p className="text-xs text-surface-500">Tab Switches</p>
-                                        <p className={`text-lg font-bold ${selectedAttempt.tabSwitchCount > 2 ? 'text-red-500' : 'text-surface-900 dark:text-white'}`}>
-                                             {selectedAttempt.tabSwitchCount}
+                                        <p className="text-xs text-surface-500">Status</p>
+                                        <p className={`text-lg font-bold ${selectedAttempt.terminatedByViolation ? 'text-red-500' : 'text-emerald-500'}`}>
+                                             {selectedAttempt.terminatedByViolation ? '🚫' : '✅'}
                                         </p>
                                    </div>
                                    <div className="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50 text-center">
@@ -169,15 +198,18 @@ export default function AdminResults() {
                                    </div>
                               </div>
 
-                              {selectedAttempt.suspiciousLogs.length > 0 && (
+                              {selectedAttempt.suspiciousLogs?.length > 0 && (
                                    <div>
                                         <h4 className="font-medium text-surface-900 dark:text-white mb-2 flex items-center gap-2">
-                                             <HiExclamationTriangle className="w-4 h-4 text-amber-500" /> Suspicious Activity
+                                             <HiExclamationTriangle className="w-4 h-4 text-amber-500" /> Suspicious Activity Log
                                         </h4>
-                                        <div className="space-y-1.5">
+                                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                              {selectedAttempt.suspiciousLogs.map((log, i) => (
-                                                  <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/10 text-xs">
-                                                       <span className="badge-warning">{log.type.replace('_', ' ')}</span>
+                                                  <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs ${log.terminal ? 'bg-red-50 dark:bg-red-900/10' : 'bg-amber-50 dark:bg-amber-900/10'}`}>
+                                                       <div className="flex items-center gap-2">
+                                                            <span className={log.terminal ? 'badge-danger' : 'badge-warning'}>{log.type?.replace(/_/g, ' ')}</span>
+                                                            {log.detail && <span className="text-surface-500">{log.detail}</span>}
+                                                       </div>
                                                        <span className="text-surface-500">{new Date(log.timestamp).toLocaleString()}</span>
                                                   </div>
                                              ))}

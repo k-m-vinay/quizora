@@ -52,7 +52,7 @@ export default function Login() {
                          <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-8">
                               <HiShieldCheck className="w-10 h-10" />
                          </div>
-                         <h1 className="text-4xl font-display font-bold mb-4 text-center">ExamGuard Pro</h1>
+                         <h1 className="text-4xl font-display font-bold mb-4 text-center">Quizora</h1>
                          <p className="text-lg text-white/80 text-center max-w-md leading-relaxed">
                               Secure, reliable, and intelligent online examination platform with advanced anti-cheating features.
                          </p>
@@ -75,7 +75,7 @@ export default function Login() {
                          <div className="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10 w-full max-w-sm">
                               <p className="text-sm font-semibold mb-3">Demo Credentials</p>
                               <div className="space-y-2 text-xs text-white/80">
-                                   <p><span className="font-medium text-white">Admin:</span> admin@examguard.com / admin123</p>
+                                   <p><span className="font-medium text-white">Admin:</span> admin@quizora.com / admin123</p>
                                    <p><span className="font-medium text-white">Student:</span> alex@student.com / student123</p>
                               </div>
                          </div>
@@ -102,7 +102,7 @@ export default function Login() {
                          {/* Mobile demo credentials */}
                          <div className="lg:hidden mb-6 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 text-sm">
                               <p className="font-semibold text-primary-700 dark:text-primary-300 mb-2">Demo Credentials</p>
-                              <p className="text-primary-600 dark:text-primary-400"><strong>Admin:</strong> admin@examguard.com / admin123</p>
+                              <p className="text-primary-600 dark:text-primary-400"><strong>Admin:</strong> admin@quizora.com / admin123</p>
                               <p className="text-primary-600 dark:text-primary-400"><strong>Student:</strong> alex@student.com / student123</p>
                          </div>
 

@@ -11,7 +11,8 @@ const initialState = {
      isSubmitted: false,
      tabSwitchCount: 0,
      suspiciousLogs: [],
-     showWarning: false,
+     violationTerminated: false,
+     violationReason: null,
      result: null,
 }
 
@@ -29,30 +30,38 @@ const examSlice = createSlice({
                state.markedForReview = []
                state.tabSwitchCount = 0
                state.suspiciousLogs = []
+               state.violationTerminated = false
+               state.violationReason = null
                state.currentQuestionIndex = 0
                state.result = null
           },
           setAnswer: (state, action) => {
+               if (state.violationTerminated) return
                const { questionId, answer } = action.payload
                state.answers[questionId] = answer
           },
           clearAnswer: (state, action) => {
+               if (state.violationTerminated) return
                delete state.answers[action.payload]
           },
           goToQuestion: (state, action) => {
+               if (state.violationTerminated) return
                state.currentQuestionIndex = action.payload
           },
           nextQuestion: (state) => {
+               if (state.violationTerminated) return
                if (state.currentQuestionIndex < state.questions.length - 1) {
                     state.currentQuestionIndex += 1
                }
           },
           prevQuestion: (state) => {
+               if (state.violationTerminated) return
                if (state.currentQuestionIndex > 0) {
                     state.currentQuestionIndex -= 1
                }
           },
           toggleMarkForReview: (state, action) => {
+               if (state.violationTerminated) return
                const qId = action.payload
                if (state.markedForReview.includes(qId)) {
                     state.markedForReview = state.markedForReview.filter(id => id !== qId)
@@ -65,22 +74,19 @@ const examSlice = createSlice({
                     state.timeRemaining -= 1
                }
           },
-          incrementTabSwitch: (state) => {
+          // Zero-tolerance: record violation and lock exam immediately
+          recordViolation: (state, action) => {
+               if (state.violationTerminated) return // already terminated
+               const { type, detail } = action.payload
+               state.violationTerminated = true
+               state.violationReason = type
                state.tabSwitchCount += 1
                state.suspiciousLogs.push({
-                    type: 'tab_switch',
+                    type,
+                    detail: detail || null,
                     timestamp: new Date().toISOString(),
-                    count: state.tabSwitchCount,
+                    terminal: true,
                })
-          },
-          addSuspiciousLog: (state, action) => {
-               state.suspiciousLogs.push({
-                    ...action.payload,
-                    timestamp: new Date().toISOString(),
-               })
-          },
-          setShowWarning: (state, action) => {
-               state.showWarning = action.payload
           },
           submitExam: (state, action) => {
                state.isSubmitted = true
@@ -93,7 +99,7 @@ const examSlice = createSlice({
 
 export const {
      startExam, setAnswer, clearAnswer, goToQuestion, nextQuestion, prevQuestion,
-     toggleMarkForReview, decrementTimer, incrementTabSwitch, addSuspiciousLog,
-     setShowWarning, submitExam, resetExam,
+     toggleMarkForReview, decrementTimer, recordViolation,
+     submitExam, resetExam,
 } = examSlice.actions
 export default examSlice.reducer

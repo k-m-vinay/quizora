@@ -65,7 +65,7 @@ export default function Register() {
                          <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center mb-8">
                               <HiShieldCheck className="w-10 h-10" />
                          </div>
-                         <h1 className="text-4xl font-display font-bold mb-4 text-center">Join ExamGuard Pro</h1>
+                         <h1 className="text-4xl font-display font-bold mb-4 text-center">Join Quizora</h1>
                          <p className="text-lg text-white/80 text-center max-w-md leading-relaxed">
                               Create your account and access the most secure examination platform available.
                          </p>
@@ -98,8 +98,8 @@ export default function Register() {
                                                   type="button"
                                                   onClick={() => setFormData({ ...formData, role })}
                                                   className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all border ${formData.role === role
-                                                            ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300'
-                                                            : 'bg-surface-50 dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                                                       ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300'
+                                                       : 'bg-surface-50 dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-400 hover:border-surface-300'
                                                        }`}
                                              >
                                                   {role.charAt(0).toUpperCase() + role.slice(1)}

@@ -101,9 +101,13 @@ export const testAPI = {
           await delay(400)
           const now = new Date()
           const available = tests.filter(t => {
-               const start = new Date(t.startDate)
-               const end = new Date(t.endDate)
-               return t.isPublished && start <= now && end >= now
+               if (!t.isPublished) return false
+               // If dates are not set, treat as always available
+               const start = t.startDate ? new Date(t.startDate) : null
+               const end = t.endDate ? new Date(t.endDate) : null
+               if (start && !isNaN(start) && start > now) return false
+               if (end && !isNaN(end) && end < now) return false
+               return true
           })
           // Mark which ones have been attempted
           return available.map(t => ({
@@ -283,5 +287,56 @@ export const attemptAPI = {
                avgTabSwitches,
                testAnalytics,
           }
+     },
+}
+
+// ============ VIOLATION (Zero-Tolerance) ============
+
+export const violationAPI = {
+     async report({ studentId, testId, answers, suspiciousLogs, startedAt, violationReason }) {
+          await delay(200)
+
+          // Check if already submitted (idempotent)
+          const alreadySubmitted = attempts.some(a => a.studentId === studentId && a.testId === testId)
+          if (alreadySubmitted) {
+               return { alreadySubmitted: true }
+          }
+
+          const test = tests.find(t => t._id === testId)
+          const qs = questions[testId] || []
+
+          // Calculate score with whatever answers existed
+          let score = 0
+          qs.forEach(q => {
+               if (answers[q._id] !== undefined) {
+                    if (answers[q._id] === q.correctAnswer) {
+                         score += q.marks
+                    } else if (test?.negativeMarking) {
+                         score -= q.marks * test.negativeMarking
+                    }
+               }
+          })
+          score = Math.max(0, score)
+
+          const user = users.find(u => u._id === studentId)
+          const attempt = {
+               _id: 'att_' + Date.now(),
+               studentId,
+               studentName: user ? user.name : 'Unknown',
+               testId,
+               testTitle: test ? test.title : 'Unknown',
+               answers,
+               score: Math.round(score * 100) / 100,
+               totalMarks: test ? test.totalMarks : 0,
+               tabSwitchCount: 1,
+               suspiciousLogs: suspiciousLogs || [],
+               startedAt,
+               submittedAt: new Date().toISOString(),
+               percentage: test ? Math.round((score / test.totalMarks) * 1000) / 10 : 0,
+               terminatedByViolation: true,
+               violationReason: violationReason || 'unknown',
+          }
+          attempts.push(attempt)
+          return clone(attempt)
      },
 }

@@ -59,14 +59,15 @@ export default function StudentResults() {
                {/* Results list */}
                <div className="space-y-3">
                     {attempts.map((a, i) => (
-                         <div key={a._id} className="card p-5">
+                         <div key={a._id} className={`card p-5 ${a.terminatedByViolation ? 'border-red-300 dark:border-red-800 bg-red-50/30 dark:bg-red-900/5' : ''}`}>
                               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                    <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${a.percentage >= 75 ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
-                                                  a.percentage >= 50 ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
-                                                       'bg-gradient-to-br from-red-500 to-red-600'
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${a.terminatedByViolation ? 'bg-gradient-to-br from-red-600 to-red-700' :
+                                                  a.percentage >= 75 ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
+                                                       a.percentage >= 50 ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
+                                                            'bg-gradient-to-br from-red-500 to-red-600'
                                              }`}>
-                                             {a.percentage}%
+                                             {a.terminatedByViolation ? '🚫' : `${a.percentage}%`}
                                         </div>
                                         <div>
                                              <h3 className="font-semibold text-surface-900 dark:text-white">{a.testTitle}</h3>
@@ -81,16 +82,22 @@ export default function StudentResults() {
                                    </div>
 
                                    <div className="flex items-center gap-4">
-                                        <div className="text-right">
-                                             <p className="font-bold text-lg text-surface-900 dark:text-white">{a.score}/{a.totalMarks}</p>
-                                             <span className={`badge ${a.percentage >= 75 ? 'badge-success' : a.percentage >= 50 ? 'badge-warning' : 'badge-danger'}`}>
-                                                  {a.percentage >= 75 ? 'Excellent' : a.percentage >= 50 ? 'Passed' : 'Needs Improvement'}
-                                             </span>
-                                        </div>
-                                        {a.tabSwitchCount > 0 && (
-                                             <span className={`badge ${a.tabSwitchCount > 2 ? 'badge-danger' : 'badge-warning'}`}>
-                                                  {a.tabSwitchCount} switch{a.tabSwitchCount !== 1 ? 'es' : ''}
-                                             </span>
+                                        {a.terminatedByViolation ? (
+                                             <div className="text-right">
+                                                  <span className="badge-danger flex items-center gap-1 text-xs font-bold">
+                                                       🚫 MALPRACTICE
+                                                  </span>
+                                                  <p className="text-xs text-red-500 mt-1">
+                                                       {a.violationReason?.replace(/_/g, ' ') || 'Policy violation'}
+                                                  </p>
+                                             </div>
+                                        ) : (
+                                             <div className="text-right">
+                                                  <p className="font-bold text-lg text-surface-900 dark:text-white">{a.score}/{a.totalMarks}</p>
+                                                  <span className={`badge ${a.percentage >= 75 ? 'badge-success' : a.percentage >= 50 ? 'badge-warning' : 'badge-danger'}`}>
+                                                       {a.percentage >= 75 ? 'Excellent' : a.percentage >= 50 ? 'Passed' : 'Needs Improvement'}
+                                                  </span>
+                                             </div>
                                         )}
                                    </div>
                               </div>
